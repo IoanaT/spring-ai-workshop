@@ -18,6 +18,7 @@ import reactor.core.publisher.Flux;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.tool.ToolCallbackProvider;
 
 @RestController
 @RequestMapping("api")
@@ -32,7 +33,7 @@ public class ChatController {
 
 	private final VectorStore vectorStore;
 
-	public ChatController (ChatClient.Builder chatClient, DataSource dataSource, VectorStore vectorStore){
+	public ChatController (ChatClient.Builder chatClient, DataSource dataSource, VectorStore vectorStore, ToolCallbackProvider tools){
 		var chatMemoryRepository = JdbcChatMemoryRepository.builder()
 			.dataSource(dataSource)
 			.dialect(new PostgresChatMemoryRepositoryDialect())
