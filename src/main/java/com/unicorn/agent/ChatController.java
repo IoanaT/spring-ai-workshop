@@ -10,8 +10,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.chat.memory.repository.jdbc.PostgresChatMemoryRepositoryDialect;
+
+import java.util.List;
+
 import javax.sql.DataSource;
 import reactor.core.publisher.Flux;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.document.Document;
 
 @RestController
 @RequestMapping("api")
@@ -24,7 +30,9 @@ public class ChatController {
 
 	private final ChatClient chatClient;
 
-	public ChatController (ChatClient.Builder chatClient, DataSource dataSource){
+	private final VectorStore vectorStore;
+
+	public ChatController (ChatClient.Builder chatClient, DataSource dataSource, VectorStore vectorStore){
 		var chatMemoryRepository = JdbcChatMemoryRepository.builder()
 			.dataSource(dataSource)
 			.dialect(new PostgresChatMemoryRepositoryDialect())
@@ -34,9 +42,13 @@ public class ChatController {
 		    .chatMemoryRepository(chatMemoryRepository)
 			.maxMessages(20)
 			.build();
+
+		this.vectorStore = vectorStore;
+
 		this.chatClient = chatClient
 			.defaultSystem(DEFAULT_SYSTEM_PROMPT)
-			.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+			.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build(),
+			QuestionAnswerAdvisor.builder(vectorStore).build())
 			.build();
 	}
 
@@ -45,6 +57,11 @@ public class ChatController {
         var chatResponse = chatClient.prompt().user(promptRequest.prompt()).call().chatResponse();
         return (chatResponse != null) ? chatResponse.getResult().getOutput().getText() : null;
 	}
+
+	@PostMapping("load")
+    public void loadDataToVectorStore(@RequestBody String content) {
+        vectorStore.add(List.of(new Document(content)));
+    }
 
     //streaming responses from the model/agent in real time instead of waiting for the entire output to be generated
      @PostMapping("/chat/stream")
