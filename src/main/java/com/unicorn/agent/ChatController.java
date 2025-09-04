@@ -49,6 +49,7 @@ public class ChatController {
 			.defaultSystem(DEFAULT_SYSTEM_PROMPT)
 			.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build(),
 			QuestionAnswerAdvisor.builder(vectorStore).build())
+			.defaultTools(new DateTimeTools(), new WeatherTools())
 			.build();
 	}
 
