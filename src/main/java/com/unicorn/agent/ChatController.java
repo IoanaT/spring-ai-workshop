@@ -30,6 +30,7 @@ public class ChatController {
         return (chatResponse != null) ? chatResponse.getResult().getOutput().getText() : null;
 	}
 
+    //streaming responses from the model/agent in real time instead of waiting for the entire output to be generated
      @PostMapping("/chat/stream")
 	public Flux<String> chatStream(@RequestBody PromptRequest promptRequest){
 		return chatClient.prompt().user(promptRequest.prompt()).stream().content();
